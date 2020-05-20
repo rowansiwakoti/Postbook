@@ -11,7 +11,8 @@ const {
 
 const {
     signup,
-    login
+    login,
+    uploadImage
 } = require('./handlers/users');
 
 // Post routes
@@ -22,6 +23,7 @@ app.post('/post', FBAuth, addPost);
 // Users routes
 app.post('/signup', signup)
 app.post('/login', login)
+app.post('/user/image', FBAuth, uploadImage)
 
 
 exports.api = functions.https.onRequest(app);
