@@ -6,20 +6,21 @@ const {
 const config = require('../util/config');
 const {
     validateSignUpData,
-    validateLoginData
+    validateLoginData,
+    reduceUserDetails
 } = require('../util/validators');
 
 const firebase = require('firebase');
-firebase.initializeApp(config)
+firebase.initializeApp(config);
 
-
+// Sign users up
 exports.signup = (req, res) => {
     const newUser = {
         email: req.body.email,
         password: req.body.password,
         confirmPassword: req.body.confirmPassword,
         handle: req.body.handle
-    }
+    };
 
     const {
         valid,
@@ -44,7 +45,7 @@ exports.signup = (req, res) => {
         })
         .then(data => {
             userId = data.user.uid;
-            return data.user.getIdToken()
+            return data.user.getIdToken();
         })
         .then(token => {
             tokenKey = token;
@@ -60,7 +61,7 @@ exports.signup = (req, res) => {
         .then(() => {
             return res.status(201).json({
                 token: tokenKey
-            })
+            });
         })
         .catch(err => {
             console.error(err);
@@ -76,7 +77,7 @@ exports.signup = (req, res) => {
         })
 };
 
-
+// Log user in.
 exports.login = (req, res) => {
     const user = {
         email: req.body.email,
@@ -86,7 +87,7 @@ exports.login = (req, res) => {
     const {
         valid,
         errors
-    } = validateSignUpData(newUser);
+    } = validateLoginData(user);
 
     if (!valid) return res.status(400).json(errors);
 
@@ -117,6 +118,50 @@ exports.login = (req, res) => {
         })
 };
 
+// Add user details
+exports.addUserDetails = (req, res) => {
+    let userDetails = reduceUserDetails(req.body);
+
+    db.doc(`/users/${req.user.handle}`).update(userDetails)
+        .then(() => {
+            return res.json({
+                message: 'Details added successfully!'
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            return res.status(500).json({
+                error: err.code
+            });
+        });
+};
+
+exports.getUser = (req, res) => {
+    let userData = {};
+    db.doc(`/users/${req.user.handle}`).get()
+        .then(doc => {
+            if (doc.exists) {
+                userData.credentials = doc.data();
+                return db.collection('likes').where('userHandle', '==', req.user.handle).get();
+            }
+        })
+        .then(data => {
+            userData.likes = [];
+            data.forEach(doc => {
+                userData.likes.push(doc.data());
+            });
+            return res.json(userData);
+        })
+        .catch(err => {
+            console.error(err);
+            return res.status(500).json({
+                error: err.code
+            });
+        });
+
+};
+
+// Uploads a profile image for a user.
 exports.uploadImage = (req, res) => {
     const BusBoy = require('busboy');
     const path = require('path');
