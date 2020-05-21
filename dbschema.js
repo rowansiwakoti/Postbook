@@ -15,6 +15,12 @@ let db = {
         createdAt: '2020-05-16T15:35:30.896Z',
         likeCount: 5,
         commentCount: 2
+    }],
+    comments: [{
+        userHandle: 'user',
+        postId: 'postId',
+        body: 'body',
+        createdAt: 'createdAt'
     }]
 };
 
